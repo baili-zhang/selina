@@ -12,10 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub const Level = struct {
-    id: u32,
-
-    pub fn init(id: u32) Level {
-        return .{ .id = id };
-    }
-};
+comptime {}

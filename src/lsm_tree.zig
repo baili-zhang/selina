@@ -20,6 +20,11 @@ const Level = @import("level.zig").Level;
 
 const CREATE_NEW_DIR_MSG = "Try to create a new dir";
 const DETECTED_DIR_MSG = "The directory has been detected";
+const LOAD_LEVEL_MSG = "Load a level of LSM tree";
+
+pub const LsmTreeError = error{
+    LevelDirectoryMissing,
+};
 
 pub const LsmTree = struct {
     dir: fs.Dir,
@@ -41,16 +46,27 @@ pub const LsmTree = struct {
 
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         const allocator = gpa.allocator();
-        const levels = std.ArrayList(Level).init(allocator);
+        var ids_array = std.ArrayList(u32).init(allocator);
+        defer ids_array.deinit();
 
         var iterator = db_dir.iterate();
         while (try iterator.next()) |entry| {
             if (entry.kind == .directory) {
                 try Log.printInfo(DETECTED_DIR_MSG, entry.name);
-
-                const level = Level.init();
-                levels.append(level);
+                const id = try std.fmt.parseUnsigned(u32, entry.name, 10);
+                try ids_array.append(id);
             }
+        }
+
+        const ids_slice = try ids_array.toOwnedSlice();
+        std.mem.sort(u32, ids_slice, {}, comptime std.sort.asc(u32));
+
+        var levels = std.ArrayList(Level).init(allocator);
+        for (ids_slice, 0..) |id, idx| {
+            if (id != idx) return error.LevelDirectoryMissing;
+
+            try Log.printInfo(LOAD_LEVEL_MSG, id);
+            try levels.append(Level.init(id));
         }
 
         return .{ .dir = db_dir, .levels = levels };

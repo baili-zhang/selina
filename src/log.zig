@@ -14,12 +14,17 @@
 
 const std = @import("std");
 
-const INFO_MSG = "[INFO] {s}. - Params: \"{s}\"";
+const INFO_STRING_MSG = "[INFO] {s}. - Params: \"{s}\"\n";
+const INFO_ANY_MSG = "[INFO] {s}. - Params: \"{any}\"\n";
 const ERROR_MSG = "";
 
 pub const Log = struct {
-    pub fn printInfo(msg: []const u8, param: []const u8) !void {
+    pub fn printInfo(msg: []const u8, param: anytype) !void {
         const stdout = std.io.getStdOut().writer();
-        try stdout.print(INFO_MSG, .{ msg, param });
+
+        switch (@TypeOf(param)) {
+            []const u8 => try stdout.print(INFO_STRING_MSG, .{ msg, param }),
+            else => try stdout.print(INFO_ANY_MSG, .{ msg, param }),
+        }
     }
 };
