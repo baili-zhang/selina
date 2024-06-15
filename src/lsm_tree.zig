@@ -18,11 +18,10 @@ const fs = std.fs;
 const Log = @import("log.zig").Log;
 const SkipList = @import("skiplist.zig").SkipList;
 const Level = @import("level.zig").Level;
-const Values = @import("values/root.zig").Values;
+const Values = @import("values.zig").Values;
 
 const CREATE_NEW_DIR_MSG = "Try to create a new dir";
-const DETECTED_DIR_MSG = "The directory has been detected";
-const LOAD_LEVEL_MSG = "Load a level of LSM tree";
+const DETECTED_DIR_MSG = "A level directory has been detected";
 
 const DEFAULT_MEMTABLE_SIZE = 2000;
 
@@ -60,7 +59,7 @@ pub const LsmTree = struct {
         while (try iterator.next()) |entry| {
             if (entry.kind == .directory) {
                 try Log.printInfo(DETECTED_DIR_MSG, entry.name);
-                const id = try std.fmt.parseUnsigned(u32, entry.name, 10);
+                const id = try Level.toId(entry.name);
                 try ids_array.append(id);
             }
         }
@@ -71,9 +70,7 @@ pub const LsmTree = struct {
         var levels = std.ArrayList(Level).init(allocator);
         for (ids_slice, 0..) |id, idx| {
             if (id != idx) return error.LevelDirectoryMissing;
-
-            try Log.printInfo(LOAD_LEVEL_MSG, id);
-            try levels.append(Level.init(id));
+            try levels.append(try Level.init(db_path, id));
         }
 
         const mutable = SkipList.init(DEFAULT_MEMTABLE_SIZE);

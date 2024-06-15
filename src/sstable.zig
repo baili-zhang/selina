@@ -12,7 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const BloomFilter = struct {
+    pub fn init() BloomFilter {
+        return .{};
+    }
+
+    pub fn deinit() void {}
+};
+
+pub const SsTableError = error{
+    SsTableFileMissing,
+};
+
 pub const SsTable = struct {
-    pub fn init() void {}
+    bloom_filter: BloomFilter,
+
+    pub fn init(path: []const u8) !SsTable {
+        _ = path;
+    }
     pub fn deinit() void {}
 };
